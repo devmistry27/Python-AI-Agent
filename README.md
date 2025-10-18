@@ -1,93 +1,46 @@
 # Python AI Agent
 
-A modular Python-based AI agent system designed to perform code analysis, file operations, and Python script execution through function calling and structured workflows.
+AI-powered coding assistant that uses Gemini 2.5 Flash to interact with a Python codebase through function calling. Includes a calculator application as a demonstration project.
 
 ## Project Structure
 
 ```
-PYTHON AI AGENT/
-│
-├── calculator/
+.
+├── calculator/                # Demo calculator application
 │   ├── pkg/
-│   │   ├── calculator.py
-│   │   ├── render.py
-│   │   ├── lorem.txt
-│   │   ├── morelorem.txt
-│   │   ├── main.py
-│   │   └── __pycache__/
-│   └── tests.py
-│
-├── functions/
-│   ├── get_file_content.py
-│   ├── get_files_info.py
-│   ├── run_python_file.py
-│   ├── write_file.py
-│   └── __pycache__/
-│
-├── .env
-├── .gitignore
-├── .python-version
-├── call_function.py
-├── config.py
-├── main.py
-├── prompts.py
-├── pyproject.toml
-├── README.md
-├── tests.py
-└── uv.lock
+│   │   ├── calculator.py      # Core calculator logic with operator precedence
+│   │   └── render.py          # JSON output formatting
+│   ├── main.py                # Calculator CLI entry point
+│   └── tests.py               # Unit tests
+├── functions/                 # Agent capabilities
+│   ├── get_files_info.py      # List directory contents
+│   ├── get_file_content.py    # Read file contents (max 10K chars)
+│   ├── run_python_file.py     # Execute Python files with args
+│   └── write_file.py          # Create/overwrite files
+├── call_function.py           # Function dispatcher
+├── config.py                  # Constants (MAX_CHARS, WORKING_DIR)
+├── prompts.py                 # System instruction for agent
+├── main.py                    # Agent CLI entry point
+└── tests.py                   # Function validation tests
 ```
 
-## Features
+## Requirements
 
-**File Operations**
-- Retrieve detailed metadata about project files
-- Read and write file contents dynamically
-
-**Function Orchestration**
-- Centralized function dispatching through `call_function.py`
-- Dynamic invocation of helper modules
-
-**Python Execution**
-- Programmatic execution of Python scripts
-- Modular calculator package demonstrating extensible design
-
-**AI Integration**
-- Compatible with LLM APIs (Gemini, GPT) for autonomous agent behavior
-- Structured prompts and configuration management
+- Python 3.x
+- `google-genai`
+- `python-dotenv`
 
 ## Installation
 
-### Clone Repository
+### Install Dependencies
 
 ```bash
-git clone https://github.com/<your-username>/python-ai-agent.git
-cd python-ai-agent
+pip install google-genai python-dotenv
 ```
 
-### Virtual Environment Setup
+### Configure API Key
 
-```bash
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-```
-
-### Dependencies
-
-Using `uv`:
-
-```bash
-uv sync
-```
-
-Using `pip`:
-
-```bash
-pip install -r requirements.txt
-```
-
-### Environment Configuration
-
-Create `.env` file in root directory:
+Create a `.env` file in the root directory:
 
 ```
 GEMINI_API_KEY=your_api_key_here
@@ -95,64 +48,127 @@ GEMINI_API_KEY=your_api_key_here
 
 ## Usage
 
-### Basic Execution
+### AI Agent
+
+**Basic Command:**
 
 ```bash
-python main.py
+python main.py "your prompt here"
 ```
 
-### Run Specific Python File
+**Verbose Mode:**
 
 ```bash
-python functions/run_python_file.py
+python main.py "your prompt here" --verbose
+```
+
+**Examples:**
+
+```bash
+python main.py "List all files in the calculator directory"
+python main.py "Run the calculator tests"
+python main.py "Fix any bugs you find in calculator.py"
+```
+
+### Calculator Application
+
+**Execute Calculator:**
+
+```bash
+cd calculator
+python main.py "3 + 5"
+python main.py "(3 + 5) * 2"
+python main.py "2 * 3 - 8 / 2 + 5"
+```
+
+**Output Format:**
+
+```json
+{
+  "expression": "3 + 5",
+  "result": 8
+}
 ```
 
 ### Testing
 
+**Run Calculator Tests:**
+
 ```bash
-pytest
+cd calculator
+python tests.py
+```
+
+**Run Agent Function Tests:**
+
+```bash
+python tests.py
+```
+
+## Agent Capabilities
+
+The agent provides the following operations through function calling:
+
+**File Operations:**
+- List files and directories with size information
+- Read file contents (truncated at 10,000 characters)
+- Write or overwrite files within the working directory
+
+**Python Execution:**
+- Execute Python files with optional command-line arguments
+- 30-second timeout for script execution
+
+All operations are sandboxed to the configured `WORKING_DIR` for security.
+
+## Calculator Features
+
+**Supported Operations:**
+- Basic arithmetic: `+`, `-`, `*`, `/`
+- Operator precedence (multiplication/division before addition/subtraction)
+- Parentheses support for grouping expressions
+- Whitespace-agnostic tokenization
+
+**Error Handling:**
+- Division by zero detection
+- Invalid token validation
+- Mismatched parentheses detection
+
+## Security
+
+**File System Protection:**
+- All file operations constrained to `WORKING_DIR` via path validation
+- No access to parent directories or absolute paths outside working directory
+- File read truncation at 10,000 characters
+
+**Execution Safety:**
+- Python execution timeout of 30 seconds
+- Sandboxed execution environment
+
+## Configuration
+
+Modify `config.py` to adjust system parameters:
+
+```python
+MAX_CHARS = 10000           # Maximum characters to read from files
+WORKING_DIR = "./calculator" # Sandboxed working directory
 ```
 
 ## Architecture
 
-**Core Components**
-- `main.py` - Agent initialization and entry point
-- `call_function.py` - Function dispatcher and orchestrator
-- `config.py` - Configuration management
-- `prompts.py` - Agent prompt templates
+**Core Components:**
+- `main.py` - Agent entry point and CLI interface
+- `call_function.py` - Dispatches function calls from Gemini to Python implementations
+- `prompts.py` - System instructions defining agent behavior
+- `config.py` - Centralized configuration management
 
-**Functions Module**
-- `get_file_content.py` - File content retrieval
-- `get_files_info.py` - File metadata extraction
-- `run_python_file.py` - Python script execution
-- `write_file.py` - File writing operations
+**Function Module:**
+Each function in `functions/` directory implements a specific capability:
+- File system operations (read, write, list)
+- Python script execution with argument passing
+- Integrated with Gemini's function calling API
 
-**Calculator Package**
-- Modular example demonstrating package integration
-- Includes rendering, I/O operations, and testing
-
-## Technical Stack
-
-- **Language:** Python 3.10+
-- **Key Libraries:** `dotenv`, `google-genai`, `uv`, `pytest`
-- **Architecture:** Modular and extensible design
-- **Application:** AI-driven automation and code manipulation
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/feature-name`)
-3. Commit changes (`git commit -m 'Add feature'`)
-4. Push to branch (`git push origin feature/feature-name`)
-5. Open Pull Request
-
-## License
-
-This project is licensed under the MIT License. See LICENSE file for details.
-
-## Roadmap
-
-- OpenAI and Gemini model integration for enhanced reasoning
-- Persistent memory for agent state management
-- Expanded plugin system for additional functionality
-- Comprehensive logging and error tracing
+**Calculator Package:**
+Demonstrates a complete Python application that the agent can interact with:
+- Modular design with separate logic and rendering layers
+- Comprehensive test coverage
+- CLI interface for standalone usage
